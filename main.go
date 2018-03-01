@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"fmt"
 	"os"
 	"encoding/json"
 )
@@ -37,13 +36,16 @@ func Load() {
 		panic(err)
 	}
 }
-
+func handle(format string) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(format))
+	}
+	return http.HandlerFunc(fn)
+}
 func main() {
 	Load()
 	for _, data := range Conf.Object.ApiData {
-		http.HandleFunc(data.Url, func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, data.Response)
-		})
+		http.Handle(data.Url, handle(data.Response))
 	}
 	http.ListenAndServe(Conf.Object.Port, nil)
 }
