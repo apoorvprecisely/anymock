@@ -1,8 +1,10 @@
-package conf
+package main
 
 import (
-	"encoding/json"
+	"net/http"
+	"fmt"
 	"os"
+	"encoding/json"
 )
 
 const confFile = "mock-api.json"
@@ -34,4 +36,14 @@ func Load() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+	Load()
+	for _, data := range Conf.Object.ApiData {
+		http.HandleFunc(data.Url, func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, data.Response)
+		})
+	}
+	http.ListenAndServe(Conf.Object.Port, nil)
 }
