@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
-	"encoding/json"
 )
 
-const confFile = "mock-api.json"
+const defaultConfFile = "mock-api.json"
 
 type Configuration struct {
 	Object ObjectType
@@ -24,8 +26,8 @@ type ApiData struct {
 	Response string
 }
 
-func Load() {
-	file, err := os.Open(confFile)
+func Load(fileName *string) {
+	file, err := os.Open(*fileName)
 	if err != nil {
 		panic(err)
 	}
@@ -42,8 +44,26 @@ func handle(format string) http.Handler {
 	}
 	return http.HandlerFunc(fn)
 }
+func myUsage() {
+	fmt.Printf("Usage: %s [OPTIONS] argument ...\n", os.Args[0])
+	flag.PrintDefaults()
+	fmt.Print("{\n" +
+		"  \"object\": {\n" +
+		"    \"apiData\": [\n" +
+		"      {\n" +
+		"        \"url\": \"/abc/xyz\",\n" +
+		"        \"response\": \"Success\"\n" +
+		"      }\n" +
+		"    ],\n" +
+		"    \"port\": \"1234\"\n" +
+		"  }\n" +
+		"}")
+}
 func main() {
-	Load()
+	file := flag.String("config", "mock-api.json", "Config File to pick up requests and responses")
+	flag.Usage = myUsage
+	flag.Parse()
+	Load(file)
 	for _, data := range Conf.Object.ApiData {
 		http.Handle(data.Url, handle(data.Response))
 	}
